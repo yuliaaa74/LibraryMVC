@@ -1,0 +1,71 @@
+@model IEnumerable<LibraryMVC.Models.Author>
+
+@{
+    ViewData["Title"] = "Автори";
+}
+
+<h1 class="mb-4">Автори</h1>
+
+@* Кнопка "Додати" видима тільки для Адміна *@
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-success">Додати автора</a>
+    </p>
+}
+
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info" role="alert">
+        Ще не додано жодного автора.
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create">Створити першого?</a>
+        }
+    </div>
+}
+else
+{
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Фото</th>
+                <th>Ім'я</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td style="width: 80px;">
+                        @if (!string.IsNullOrEmpty(item.PhotoPath))
+                        {
+                            <img src="@item.PhotoPath" alt="Фото" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <img src="https://via.placeholder.com/50?text=No+Photo" alt="Без фото" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td class="text-nowrap" style="width: 1%;">
+                        <div class="btn-group btn-group-sm" role="group">
+
+                            <a asp-action="LandingPage" asp-route-id="@item.Id" class="btn btn-outline-primary">Деталі</a>
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary">Редагувати</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Видалити</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  webapp:
+    build: .
+    container_name: librarymvc-webapp-1
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=DataSource=/app/data/library.db
+      - Authentication__Google__ClientId=473923638947-vibi9cpqcm7sakj1i3ctsekmd5akbh79.apps.googleusercontent.com
+      - Authentication__Google__ClientSecret=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
+      - Telegram__BotToken=8162473510:AAHq0aiw9B3Z0ituSWYY5RjihnBd26ld-_0
+      - Telegram__ChatId=@MyLibraryNews
+    volumes:
+      
+      - appdata:/app/data
+
+      
+      - ./LibraryMVC/wwwroot/images/books:/app/wwwroot/images/books
+      - ./LibraryMVC/wwwroot/images/authors:/app/wwwroot/images/authors
+
+volumes:
+  appdata:

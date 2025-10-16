@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "Головна";
+}
+
+<div class="text-center py-5 bg-light rounded-3 shadow-sm">
+    <h1 class="display-4 fw-bold mb-3">Ласкаво просимо до Бібліотеки!</h1>
+    <p class="lead text-muted mb-4">
+        Ваш універсальний помічник для керування книгами, авторами та жанрами.
+        Створюйте, редагуйте та переглядайте свою колекцію з легкістю.
+    </p>
+
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a asp-controller="Books" asp-action="Index" class="btn btn-primary btn-lg px-4 gap-3">
+            📚 Переглянути Книги
+        </a>
+        <a asp-controller="Authors" asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+            👤 Переглянути Авторів
+        </a>
+        <a asp-controller="Genres" asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+            🎨 Переглянути Жанри
+        </a>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row row-cols-1 row-cols-md-3 g-4 text-center">
+        <div class="col">
+            <div class="p-4 border rounded-3 h-100 d-flex flex-column justify-content-between shadow-sm">
+                <h2 class="h4 fw-bold">Організуйте Книги</h2>
+                <p class="text-muted">Легко додавайте нові видання, керуйте обкладинками та деталями.</p>
+                <a asp-controller="Books" asp-action="Create" class="btn btn-sm btn-outline-primary mt-auto">Додати книгу</a>
+            </div>
+        </div>
+        <div class="col">
+            <div class="p-4 border rounded-3 h-100 d-flex flex-column justify-content-between shadow-sm">
+                <h2 class="h4 fw-bold">Ведіть облік Авторів</h2>
+                <p class="text-muted">Зберігайте інформацію про улюблених письменників та їхні фотографії.</p>
+                <a asp-controller="Authors" asp-action="Create" class="btn btn-sm btn-outline-primary mt-auto">Додати автора</a>
+            </div>
+        </div>
+        <div class="col">
+            <div class="p-4 border rounded-3 h-100 d-flex flex-column justify-content-between shadow-sm">
+                <h2 class="h4 fw-bold">Класифікуйте Жанри</h2>
+                <p class="text-muted">Створюйте та призначайте жанри для кращої організації вашої колекції.</p>
+                <a asp-controller="Genres" asp-action="Create" class="btn btn-sm btn-outline-primary mt-auto">Створити жанр</a>
+            </div>
+        </div>
+    </div>
+</div>

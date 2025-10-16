@@ -1,0 +1,12 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY ["LibraryMVC/LibraryMVC.csproj", "LibraryMVC/"]
+RUN dotnet restore "LibraryMVC/LibraryMVC.csproj"
+
+COPY . .
+WORKDIR "/src/LibraryMVC"
+RUN dotnet build "LibraryMVC.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "LibraryMVC.csproj" -c Release -o /app/publish /p:UseAppHost=false

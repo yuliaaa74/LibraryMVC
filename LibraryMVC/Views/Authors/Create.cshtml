@@ -1,0 +1,44 @@
+@model LibraryMVC.Models.Author
+
+@{
+    ViewData["Title"] = "Створити автора";
+}
+
+<h1>Створити</h1>
+
+<h4>Автор</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label">Ім'я</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="photoFile" class="control-label">Фото</label>
+                <input type="file" name="photoFile" class="form-control" />
+                <div class="form-group">
+                    <label asp-for="Biography" class="control-label">Біографія</label>
+                    <textarea asp-for="Biography" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Biography" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group mt-3">
+                <input type="submit" value="Створити" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Повернутися до списку</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

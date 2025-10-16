@@ -1,0 +1,84 @@
+@{
+    ViewData["Title"] = "Статистика";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Статистика Бібліотеки</h1>
+    <p class="lead">Візуалізація даних по популярності книг та жанрів.</p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5>Топ-5 найпопулярніших книг (за кількістю додавань в обране)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="mostFavoritedBooksChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5>Популярність жанрів у бібліотеці</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="booksPerGenreChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            fetch('/api/dashboardapi/MostFavoritedBooks')
+                .then(response => response.json())
+                .then(data => {
+                    
+                    const items = Array.isArray(data) ? data : data.$values;
+
+                    const labels = items.map(item => item.bookTitle);
+                    const values = items.map(item => item.favoritesCount);
+
+                    new Chart(document.getElementById('mostFavoritedBooksChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Кількість додавань в обране',
+                                data: values,
+                                backgroundColor: 'rgba(255, 159, 64, 0.7)'
+                            }]
+                        },
+                        options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                    });
+                });
+
+         
+            fetch('/api/dashboardapi/BooksPerGenre')
+                .then(response => response.json())
+                .then(data => {
+                    
+                    const items = Array.isArray(data) ? data : data.$values;
+
+                    const labels = items.map(item => item.genreName);
+                    const values = items.map(item => item.bookCount);
+
+                    new Chart(document.getElementById('booksPerGenreChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
+                            }]
+                        }
+                    });
+                });
+        });
+    </script>
+}

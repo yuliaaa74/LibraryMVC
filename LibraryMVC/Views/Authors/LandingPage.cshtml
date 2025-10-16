@@ -1,0 +1,99 @@
+@model LibraryMVC.Models.Author
+@{
+    Layout = null; 
+}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Name</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            position: relative;
+            padding-top: 56px; 
+        }
+
+        .hero-section {
+            padding: 100px 0;
+            background-color: #f8f9fa;
+        }
+
+        section {
+            padding: 60px 0;
+        }
+
+        .card-img-top {
+            width: 100%;
+            height: 200px; 
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body data-bs-spy="scroll" data-bs-target="#navbar-example">
+
+    <nav id="navbar-example" class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">@Model.Name</a>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="#biography">Біографія</a></li>
+                <li class="nav-item"><a class="nav-link" href="#books">Книги автора</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero-section text-center">
+        <div class="container">
+            <img src="@Model.PhotoPath" class="img-fluid rounded-circle shadow mb-4" alt="Фото @Model.Name" style="width: 200px; height: 200px; object-fit: cover;">
+            <h1 class="display-4">@Model.Name</h1>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary mt-3">Повернутись на головну</a>
+        </div>
+    </header>
+
+    <section id="biography" class="container">
+        <h2>Біографія</h2>
+        <hr>
+        <p>@Model.Biography</p>
+    </section>
+
+    <section id="books" class="bg-light">
+        <div class="container">
+            <h2>Книги автора</h2>
+            <hr>
+            <div class="row">
+                @if (Model.Books != null && Model.Books.Any())
+                {
+                    @foreach (var book in Model.Books)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <img src="@book.PhotoPath" class="card-img-top" alt="Обкладинка @book.Title">
+                                <div class="card-body">
+                                    <h5 class="card-title">@book.Title</h5>
+                                </div>
+                                <div class="card-footer">
+                                    <a asp-controller="Books" asp-action="LandingPage" asp-route-id="@book.Id" class="btn btn-primary">Детальніше про книгу</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>У цього автора ще немає доданих книг.</p>
+                }
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer bg-dark text-white text-center py-3 fixed-bottom">
+        <div class="container">
+            <span>Контакти: library@example.com | (044) 123-45-67</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

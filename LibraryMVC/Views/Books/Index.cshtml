@@ -1,0 +1,85 @@
+@model IEnumerable<LibraryMVC.Models.Book>
+
+@{
+    ViewData["Title"] = "Книги";
+}
+
+<h1 class="mb-4">Книги</h1>
+
+@* Кнопка "Створити" видима тільки для Адміна *@
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-success">Створити нову книгу</a>
+    </p>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info" role="alert">
+        Ще не додано жодної книги.
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create">Створити першу?</a>
+        }
+    </div>
+}
+else
+{
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Обкладинка</th>
+                <th>Назва</th>
+                <th>Автор</th>
+                <th>Жанри</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.PhotoPath))
+                        {
+                            <img src="@item.PhotoPath" alt="Обкладинка" style="width: 70px; height: 100px; object-fit: cover; border-radius: 4px;" class="img-thumbnail" />
+                        }
+                        else
+                        {
+                            <img src="https://via.placeholder.com/70x100?text=No+Cover" alt="Без обкладинки" style="width: 70px; height: 100px; object-fit: cover; border-radius: 4px;" class="img-thumbnail" />
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Author.Name)
+                    </td>
+                    <td>
+                        @if (item.Genres != null && item.Genres.Any())
+                        {
+                            foreach (var genre in item.Genres)
+                            {
+                                <span class="badge bg-secondary me-1">@genre.Name</span>
+                            }
+                        }
+                    </td>
+                    <td class="text-nowrap" style="width: 1%;">
+                        <div class="btn-group btn-group-sm" role="group">
+
+                            <a asp-controller="Books" asp-action="LandingPage" asp-route-id="@item.Id" class="btn btn-outline-primary">Деталі</a>
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Books" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary">Редагувати</a>
+                                <a asp-controller="Books" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Видалити</a>
+                            }
+
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

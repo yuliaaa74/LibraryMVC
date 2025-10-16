@@ -1,0 +1,48 @@
+@model LibraryMVC.Models.Book
+
+@{
+    ViewData["Title"] = "Деталі";
+}
+
+<h1>Деталі</h1>
+
+<div>
+    <h4>Книга</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            Назва
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+        <dt class="col-sm-2">
+            Автор
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Author.Name)
+        </dd>
+        <dt class="col-sm-2">
+            Жанри
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.Genres != null && Model.Genres.Any())
+            {
+                @string.Join(", ", Model.Genres.Select(g => g.Name))
+            }
+        </dd>
+        <dt class="col-sm-2">
+            Обкладинка
+        </dt>
+        <dd class="col-sm-10">
+            @if (!string.IsNullOrEmpty(Model.PhotoPath))
+            {
+                <img src="@Model.PhotoPath" alt="Обкладинка" style="max-width: 200px; max-height: 300px;" />
+            }
+        </dd>
+    </dl>
+</div>
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Редагувати</a>
+    <a asp-action="Index" class="btn btn-secondary">Назад до списку</a>
+</div>>
