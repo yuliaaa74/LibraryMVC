@@ -109,14 +109,14 @@ namespace LibraryMVC.Controllers
 
                 try
                 {
-                    // Відправляємо повідомлення в Telegram
+                    
                     var author = await _context.Authors.FindAsync(book.AuthorId);
                     var message = $"📚 <b>Нова книга в бібліотеці!</b>\n\n<b>Назва:</b> {book.Title}\n<b>Автор:</b> {author?.Name}";
                     await _telegramService.SendMessageAsync(message);
                 }
                 catch
                 {
-                    // Ігноруємо помилки відправки, щоб не "ламати" основну логіку сайту
+                   
                 }
                 return RedirectToAction(nameof(Index));
             }
