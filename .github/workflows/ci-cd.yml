@@ -2,16 +2,16 @@ name: Docker CI/CD for WebTechnologiesLab1
 
 on: 
   push: 
-    branches: ["MVC-Project"] 
+    branches: ["master"] 
 
 env:
-  AZURE_WEBAPP_NAME: labwebtech 
+  AZURE_WEBAPP_NAME: weblab1library 
   
-  DOCKER_IMAGE_NAME: kucherukdanylo/webtechlab1 
+  DOCKER_IMAGE_NAME: chastuhina13/LibraryMVC
   
-  DOTNET_CORE_VERSION: 9.0.305
+  DOTNET_CORE_VERSION: 9.0.200
   
-  WORKING_DIRECTORY: ./WebTechnologiesLab1 
+  WORKING_DIRECTORY: ./LibraryMVC 
 
 jobs: 
   # Виконуємо збірку, щоб перевірити, чи код компілюється (Це етап-перевірка)
