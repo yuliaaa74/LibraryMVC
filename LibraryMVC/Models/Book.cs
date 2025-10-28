@@ -6,6 +6,7 @@
         public class Book
     {
         public int Id { get; set; }
+        public int TenantId { get; set; }
 
         [Required]
         [Display(Name = "Назва")]
@@ -22,5 +23,6 @@
         public string? PhotoPath { get; set; }
             public string? Description { get; set; }
         public ICollection<ApplicationUser>? Users { get; set; }
+        
     }
     }

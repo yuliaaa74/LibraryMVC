@@ -1,0 +1,307 @@
+@{
+    ViewData["Title"] = "Мій список для читання";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+    .drag-handle {
+        cursor: move;
+        color: #aaa;
+        margin-right: 15px;
+        font-size: 1.1rem;
+    }
+
+    .book-item:hover .drag-handle {
+        color: #333;
+    }
+
+    .sortable-chosen {
+        user-select: none;
+    }
+
+    
+    .book-item.is-done .book-text {
+        text-decoration: line-through;
+        color: #888;
+    }
+
+    .book-item.is-done {
+        background-color: #f8f9fa; 
+    }
+
+    .book-item .book-text {
+        transition: color 0.2s; 
+    }
+
+    .book-item .form-check-input {
+        margin-top: 0.2rem;
+        margin-right: 10px;
+    }
+
+    .book-item {
+        
+        transition: background-color 0.5s, opacity 0.5s, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+        .book-item.item-entering {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        
+        .book-item.item-leaving {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+
+        
+        .book-item.item-highlight {
+            
+            background-color: #fff9c4 !important;
+            transition: background-color 1.5s;
+        }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="display-4 text-center">@ViewData["Title"]</h1>
+        <p class="lead text-center">
+            Книги, які ви плануєте прочитати.
+            <br>
+            
+        </p>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Заплановані книги</h3>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" id="sort-az" title="Сортувати А-Я">
+                        <i class="fas fa-sort-alpha-down"></i> А-Я
+                    </button>
+                    <button class="btn btn-outline-secondary" id="sort-za" title="Сортувати Я-А">
+                        <i class="fas fa-sort-alpha-up"></i> Я-А
+                    </button>
+                </div>
+            </div>
+            <ul id="reading-list" class="list-group list-group-flush">
+                <li class="list-group-item text-muted" id="empty-message">Ваш список порожній...</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const readingList = document.getElementById('reading-list');
+            const emptyMessage = document.getElementById('empty-message');
+            const sortAzBtn = document.getElementById('sort-az');
+            const sortZaBtn = document.getElementById('sort-za');
+
+            
+            const STORAGE_KEY = 'readingList_' + currentUserEmail;
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/readingListHub")
+                .build();
+
+            let initialListReceived = false;
+
+            
+            connection.on("ReceiveList", function (listJson) {
+                initialListReceived = true;
+                try {
+                    const newTasks = JSON.parse(listJson);
+                    
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(newTasks));
+
+                    
+                    syncListWithAnimations(newTasks);
+
+                    console.log("🔄 C14: Список оновлено з анімацією");
+                } catch (e) {
+                    console.error("Помилка парсингу JSON з сервера", e);
+                }
+            });
+
+           
+            connection.start().then(() => {
+                console.log("✅ SignalR підключено");
+                setTimeout(() => {
+                    if (!initialListReceived) {
+                        console.log("Сервер не має даних. Завантажуємо з localStorage.");
+                        loadList(); 
+                        syncListWithServer(); 
+                    }
+                }, 500);
+            }).catch(err => console.error("❌ SignalR error:", err));
+
+
+            
+            function syncListWithAnimations(newTasks) {
+               
+                const currentLis = Array.from(readingList.querySelectorAll('li.book-item'));
+                const newTitles = newTasks.map(task => task.title);
+
+                
+                currentLis.forEach(li => {
+                    const title = li.dataset.title;
+                    if (!newTitles.includes(title)) {
+                        li.classList.add('item-leaving'); 
+                        setTimeout(() => li.remove(), 500); 
+                    }
+                });
+
+           
+                newTasks.forEach((task, newIndex) => {
+                    const existingLi = currentLis.find(li => li.dataset.title === task.title);
+
+                    if (existingLi) {
+                       
+                        const currentIsDone = existingLi.dataset.done === 'true';
+
+                        if (task.done !== currentIsDone) {
+                            existingLi.dataset.done = task.done;
+                            existingLi.classList.toggle('is-done', task.done);
+                            existingLi.querySelector('.form-check-input').checked = task.done;
+
+                     
+                            existingLi.classList.add('item-highlight');
+                            setTimeout(() => existingLi.classList.remove('item-highlight'), 1500);
+                        }
+
+                       
+                        readingList.appendChild(existingLi);
+
+                    } else {
+                       
+                        const li = createBookItem(task.title, task.author, task.done);
+                        li.classList.add('item-entering'); 
+
+                        
+                        readingList.appendChild(li);
+
+                        
+                        setTimeout(() => li.classList.remove('item-entering'), 10);
+                    }
+                });
+
+                updateEmptyMessage(newTasks.length);
+            }
+
+           
+            function syncListWithServer() {
+                const items = [];
+                readingList.querySelectorAll('li.book-item').forEach(item => {
+                    items.push({
+                        title: item.dataset.title,
+                        author: item.dataset.author,
+                        done: item.dataset.done === 'true'
+                    });
+                });
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+                updateEmptyMessage(items.length);
+
+                if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                    try {
+                        connection.invoke("SyncList", currentUserEmail, JSON.stringify(items));
+                        console.log("📤 Список відправлено іншим пристроям");
+                    } catch (err) {
+                        console.error("❌ Sync error:", err);
+                    }
+                }
+            }
+
+           
+            function loadList() {
+                clearDomList();
+                const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                updateEmptyMessage(tasks.length);
+                tasks.forEach(task => createBookItem(task.title, task.author, task.done));
+            }
+
+           
+            function createBookItem(title, author, isDone = false) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center book-item';
+                li.dataset.title = title; li.dataset.author = author; li.dataset.done = isDone;
+                const leftSide = document.createElement('div');
+                leftSide.className = 'd-flex align-items-center';
+                const handle = document.createElement('i');
+                handle.className = 'fas fa-grip-vertical drag-handle';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; checkbox.className = 'form-check-input'; checkbox.checked = isDone;
+                const span = document.createElement('span');
+                span.className = 'book-text';
+                span.innerHTML = `<strong>${title}</strong> <small class="text-muted">(${author})</small>`;
+
+                checkbox.addEventListener('change', function() {
+                    const isChecked = this.checked;
+                    li.dataset.done = isChecked;
+                    li.classList.toggle('is-done', isChecked);
+                    if (isChecked) { readingList.appendChild(li); }
+                    syncListWithServer();
+                });
+
+                if (isDone) { li.classList.add('is-done'); }
+                leftSide.appendChild(handle); leftSide.appendChild(checkbox); leftSide.appendChild(span);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'btn btn-sm btn-outline-danger';
+                deleteButton.innerHTML = '&times;';
+                deleteButton.addEventListener('click', function() {
+                    li.remove(); 
+                    syncListWithServer(); 
+                });
+                li.appendChild(leftSide); li.appendChild(deleteButton);
+
+                if (isDone) { readingList.appendChild(li); }
+                else { readingList.insertBefore(li, emptyMessage); }
+
+                return li; 
+            }
+
+            function updateEmptyMessage(itemCount) {
+                emptyMessage.style.display = (itemCount === 0) ? 'block' : 'none';
+            }
+
+            function clearDomList() {
+                readingList.querySelectorAll('li.book-item').forEach(item => item.remove());
+            }
+
+            function sortAndReload(direction = 'asc') {
+                const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                if (tasks.length === 0) return;
+                const activeTasks = tasks.filter(t => !t.done);
+                const doneTasks = tasks.filter(t => t.done);
+                const sorter = (a, b) => {
+                    if (direction === 'asc') return a.title.localeCompare(b.title);
+                    return b.title.localeCompare(a.title);
+                };
+                activeTasks.sort(sorter); doneTasks.sort(sorter);
+                const sortedTasks = [...activeTasks, ...doneTasks];
+
+                clearDomList();
+                updateEmptyMessage(sortedTasks.length);
+                sortedTasks.forEach(task => createBookItem(task.title, task.author, task.done));
+
+                syncListWithServer(); 
+            }
+
+            new Sortable(readingList, {
+                animation: 150, handle: '.drag-handle', filter: '#empty-message',
+                preventOnFilter: true,
+                onEnd: function (evt) {
+                    syncListWithServer(); 
+                }
+            });
+
+            sortAzBtn.addEventListener('click', () => sortAndReload('asc'));
+            sortZaBtn.addEventListener('click', () => sortAndReload('desc'));
+        });
+    </script>
+}

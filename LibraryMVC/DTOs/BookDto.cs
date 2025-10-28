@@ -6,5 +6,6 @@ namespace LibraryMVC.DTOs
         public int AuthorId { get; set; }
         public List<int> GenreIds { get; set; }
         public string? Description { get; set; }
+        public int TenantId { get; set; }
     }
 }

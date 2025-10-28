@@ -19,9 +19,30 @@ namespace LibraryMVC.Controllers
 
         // GET: api/GenresApi
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Genre>>> GetGenres()
+        public async Task<ActionResult<PaginatedResponse<Genre>>> GetGenres([FromQuery] int skip = 0, [FromQuery] int limit = 5)
         {
-            return await _context.Genres.ToListAsync();
+            var totalCount = await _context.Genres.CountAsync();
+
+            var genres = await _context.Genres
+                .OrderBy(g => g.Name)
+                .Skip(skip)
+                .Take(limit)
+                .ToListAsync();
+
+            string? nextLink = null;
+            if (skip + limit < totalCount)
+            {
+                nextLink = Url.Action(nameof(GetGenres), null, new { skip = skip + limit, limit = limit }, Request.Scheme);
+            }
+
+            var response = new PaginatedResponse<Genre>
+            {
+                Items = genres,
+                TotalCount = totalCount,
+                NextLink = nextLink
+            };
+
+            return Ok(response);
         }
 
         // POST: api/GenresApi
@@ -71,7 +92,7 @@ namespace LibraryMVC.Controllers
             return NoContent();
         }
 
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Genre>> GetGenre(int id)
         {

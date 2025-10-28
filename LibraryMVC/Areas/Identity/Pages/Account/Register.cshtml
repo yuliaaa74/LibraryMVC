@@ -23,6 +23,11 @@
                 <span asp-validation-for="Input.Name" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
+                <input asp-for="Input.TenantName" class="form-control" placeholder="Назва вашої бібліотеки" />
+                <label asp-for="Input.TenantName"></label>
+                <span asp-validation-for="Input.TenantName" class="text-danger"></span>
+            </div>
+            <div class="form-floating mb-3">
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label asp-for="Input.Password">Password</label>
                 <span asp-validation-for="Input.Password" class="text-danger"></span>

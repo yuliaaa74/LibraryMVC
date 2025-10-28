@@ -76,10 +76,58 @@ else
                                 <a asp-controller="Books" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Видалити</a>
                             }
 
+                          
+                            <button class="btn btn-outline-success" onclick="addToReadingList('@item.Title', '@(item.Author?.Name ?? "Невідомий автор")')">
+                                Хочу прочитати
+                            </button>
+                            
                         </div>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+}
+
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        
+        const STORAGE_KEY = 'readingList_' + currentUserEmail;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/readingListHub")
+            .build();
+
+        connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+       
+        function addToReadingList(title, author) {
+
+            const items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const isDuplicate = items.some(item => item.title === title && item.author === author);
+             if (isDuplicate) {
+                 showToast('Помилка', 'Ця книга вже є у вашому списку для читання.');
+                 return;
+             }
+
+            items.push({ title: title, author: author, done: false });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+
+            showToast('Успіх!', `Книгу "${title}" додано до вашого списку!`);
+
+             if (connection && connection.state === signalR.HubConnectionState.Connected) {
+                 try {
+                     connection.invoke("SyncList", currentUserEmail, JSON.stringify(items));
+                     console.log("📤 Оновлений список (з Index) відправлено на сервер!");
+                 } catch (err) {
+                     console.error("❌ Sync error:", err);
+                 }
+            } else {
+                 console.warn("SignalR не підключено. Синхронізація не відбулась.");
+            }
+        }
+    </script>
 }

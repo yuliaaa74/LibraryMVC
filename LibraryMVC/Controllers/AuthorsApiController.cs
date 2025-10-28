@@ -19,9 +19,30 @@ namespace LibraryMVC.Controllers
 
         // GET: api/AuthorsApi
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
+        public async Task<ActionResult<PaginatedResponse<Author>>> GetAuthors([FromQuery] int skip = 0, [FromQuery] int limit = 5)
         {
-            return await _context.Authors.Include(a => a.Books).ToListAsync();
+            var totalCount = await _context.Authors.CountAsync();
+
+            var authors = await _context.Authors
+                .OrderBy(a => a.Name)
+                .Skip(skip)
+                .Take(limit)
+                .ToListAsync();
+
+            string? nextLink = null;
+            if (skip + limit < totalCount)
+            {
+                nextLink = Url.Action(nameof(GetAuthors), null, new { skip = skip + limit, limit = limit }, Request.Scheme);
+            }
+
+            var response = new PaginatedResponse<Author>
+            {
+                Items = authors,
+                TotalCount = totalCount,
+                NextLink = nextLink
+            };
+
+            return Ok(response);
         }
 
         // POST: api/AuthorsApi
@@ -32,7 +53,8 @@ namespace LibraryMVC.Controllers
             {
                 Name = authorDto.Name,
                 PhotoPath = authorDto.PhotoPath,
-                Biography = authorDto.Biography
+                Biography = authorDto.Biography,
+                TenantId = authorDto.TenantId
             };
 
             _context.Authors.Add(newAuthor);
@@ -41,7 +63,7 @@ namespace LibraryMVC.Controllers
             return CreatedAtAction("GetAuthor", new { id = newAuthor.Id }, newAuthor);
         }
 
-        
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Author>> GetAuthor(int id)
         {

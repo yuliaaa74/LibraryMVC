@@ -60,7 +60,7 @@ namespace LibraryMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Name,Biography")] Author author, IFormFile? photoFile)
+        public async Task<IActionResult> Create([Bind("Name,Biography,Birthplace,Latitude,Longitude")] Author author, IFormFile? photoFile)
         {
             if (ModelState.IsValid)
             {
@@ -88,7 +88,7 @@ namespace LibraryMVC.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
        
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,PhotoPath,Biography")] Author author, IFormFile? photoFile)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,PhotoPath,Biography,Birthplace,Latitude,Longitude")] Author author, IFormFile? photoFile)
         {
             if (id != author.Id) return NotFound();
 
@@ -100,7 +100,9 @@ namespace LibraryMVC.Controllers
                 authorToUpdate.Name = author.Name;
                 
                 authorToUpdate.Biography = author.Biography;
-
+                authorToUpdate.Birthplace = author.Birthplace;
+                authorToUpdate.Latitude = author.Latitude;
+                authorToUpdate.Longitude = author.Longitude;
                 if (photoFile != null)
                 {
                     _fileService.DeleteFile(authorToUpdate.PhotoPath);

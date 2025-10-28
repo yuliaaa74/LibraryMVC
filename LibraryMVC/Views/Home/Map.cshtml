@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "Мапа письменників";
+}
+
+
+<link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet' />
+
+<div class="text-center">
+    <h1 class="display-4">Мапа письменників</h1>
+    <p class="lead">Місця народження авторів з нашої бібліотеки.</p>
+</div>
+
+
+<div class="mb-3">
+    <label for="genreFilter" class="form-label">Фільтрувати за жанром:</label>
+    <select id="genreFilter" class="form-select" style="width: 250px;">
+        <option value="all">Всі жанри</option>
+        @foreach (var genre in ViewBag.Genres)
+        {
+            <option value="@genre.Id">@genre.Name</option>
+        }
+    </select>
+</div>
+
+
+<div id='map' style='width: 100%; height: 600px;' class="rounded shadow-sm"></div>
+
+@section Scripts {
+   
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+
+    <script>
+        const mapboxToken = '@ViewBag.MapboxToken';
+        mapboxgl.accessToken = mapboxToken;
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [30.5, 50.4], 
+            zoom: 1
+        });
+
+        let currentMarkers = []; 
+
+        function loadMarkers(genreId) {
+            
+            currentMarkers.forEach(marker => marker.remove());
+            currentMarkers = [];
+
+            let apiUrl = '/api/mapapi/locations';
+            if (genreId && genreId !== 'all') {
+                apiUrl += `?genreId=${genreId}`;
+            }
+
+            
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+
+                    
+                    const locations = Array.isArray(data) ? data : data.$values;
+                   
+
+                   
+                    locations.forEach(author => {
+                        const popupContent = `
+                            <div class="text-center">
+                                <img src="${author.photoPath || 'https://via.placeholder.com/80'}" alt="${author.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;" />
+                                <h5>${author.name}</h5>
+                                <p class="text-muted">${author.birthplace || ''}</p>
+                                <a href="${author.url}" class="btn btn-sm btn-primary">Детальніше</a>
+                            </div>
+                        `;
+
+                        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupContent);
+                        const marker = new mapboxgl.Marker()
+                            .setLngLat([author.longitude, author.latitude])
+                            .setPopup(popup)
+                            .addTo(map);
+
+                        currentMarkers.push(marker); 
+                    });
+                });
+        }
+
+        document.getElementById('genreFilter').addEventListener('change', function() {
+            loadMarkers(this.value);
+        });
+
+        
+        loadMarkers('all');
+    </script>
+}

@@ -1,11 +1,9 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims; // <-- ДОДАНО
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
@@ -19,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using LibraryMVC.Data; // <-- ДОДАНО
 
 namespace LibraryMVC.Areas.Identity.Pages.Account
 {
@@ -30,13 +29,15 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly AppDbContext _context; // <-- ДОДАНО
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            AppDbContext context) // <-- ДОДАНО
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,41 +45,27 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context; // <-- ДОДАНО
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Required]
             [Display(Name = "Ім'я")]
             public string Name { get; set; }
-            // -------------------------
+
+            // --- ДОДАНО НОВЕ ПОЛЕ ---
+            [Required]
+            [Display(Name = "Назва вашої бібліотеки")]
+            public string TenantName { get; set; }
+            // -----------------------
 
             [Required]
             [EmailAddress]
@@ -86,17 +73,16 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "Пароль має містити від {2} до {1} символів.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Пароль")]
             public string Password { get; set; }
 
             [DataType(DataType.Password)]
             [Display(Name = "Підтвердіть пароль")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            [Compare("Password", ErrorMessage = "Паролі не співпадають.")]
             public string ConfirmPassword { get; set; }
         }
-
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -110,7 +96,17 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email, Name = Input.Name };
+                // --- ЗМІНЕНО ЛОГІКУ СТВОРЕННЯ КОРИСТУВАЧА ---
+
+                // 1. Створюємо новий тенант (бібліотеку)
+                var newTenant = new Tenant { Name = Input.TenantName };
+                _context.Tenants.Add(newTenant);
+                await _context.SaveChangesAsync(); // Зберігаємо, щоб отримати його Id
+
+                // 2. Створюємо нового користувача і прив'язуємо до щойно створеного тенанту
+                var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email, Name = Input.Name, TenantId = newTenant.Id };
+
+                // ---------------------------------------------
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -119,6 +115,12 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    // --- ДОДАНО ЛОГІКУ ДЛЯ ЗБЕРЕЖЕННЯ ID ТЕНАНТУ ---
+                    // Додаємо "TenantId" в claims користувача. Це як бирка на одязі,
+                    // яка завжди буде з ним і допоможе нам фільтрувати дані.
+                    await _userManager.AddClaimAsync(user, new Claim("TenantId", user.TenantId.ToString()));
+                    // ------------------------------------------------
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -148,7 +150,6 @@ namespace LibraryMVC.Areas.Identity.Pages.Account
                 }
             }
 
-            // If we got this far, something failed, redisplay form
             return Page();
         }
 

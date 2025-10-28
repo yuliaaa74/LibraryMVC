@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryMVC.Data;
 using LibraryMVC.Models;
-using LibraryMVC.DTOs; 
+using LibraryMVC.DTOs;
 
 namespace LibraryMVC.Controllers
 {
@@ -19,12 +19,37 @@ namespace LibraryMVC.Controllers
 
         // GET: api/BooksApi 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
+        public async Task<ActionResult<PaginatedResponse<Book>>> GetBooks([FromQuery] int skip = 0, [FromQuery] int limit = 5)
         {
-            return await _context.Books
-                                 .Include(b => b.Author)
-                                 .Include(b => b.Genres)
-                                 .ToListAsync();
+            
+            var totalCount = await _context.Books.CountAsync();
+
+            
+            var books = await _context.Books
+                .Include(b => b.Author)
+                .Include(b => b.Genres)
+                .OrderBy(b => b.Title) 
+                .Skip(skip)  
+                .Take(limit) 
+                .ToListAsync();
+
+           
+            string? nextLink = null;
+            if (skip + limit < totalCount)
+            {
+               
+                nextLink = Url.Action(nameof(GetBooks), null, new { skip = skip + limit, limit = limit }, Request.Scheme);
+            }
+
+           
+            var response = new PaginatedResponse<Book>
+            {
+                Items = books,
+                TotalCount = totalCount,
+                NextLink = nextLink
+            };
+
+            return Ok(response);
         }
 
         // GET: api/BooksApi/5 
@@ -49,24 +74,25 @@ namespace LibraryMVC.Controllers
         [HttpPost]
         public async Task<ActionResult<Book>> PostBook(BookDto bookDto)
         {
-            
+
             var author = await _context.Authors.FindAsync(bookDto.AuthorId);
             if (author == null)
             {
                 return BadRequest("Author not found.");
             }
 
-            
+
             var genres = await _context.Genres.Where(g => bookDto.GenreIds.Contains(g.Id)).ToListAsync();
 
-            
+
             var newBook = new Book
             {
                 Title = bookDto.Title,
                 AuthorId = bookDto.AuthorId,
-                Author = author, 
-                Genres = genres, 
-                Description = bookDto.Description
+                Author = author,
+                Genres = genres,
+                Description = bookDto.Description,
+                TenantId = bookDto.TenantId
             };
 
             _context.Books.Add(newBook);
