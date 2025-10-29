@@ -17,33 +17,22 @@
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label for="photoFile" class="control-label">Фото</label>
-                <input type="file" name="photoFile" class="form-control" />
-                <div class="form-group">
-                    <label asp-for="Birthplace" class="control-label">Місце народження</label>
-                    <input asp-for="Birthplace" class="form-control" />
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="Latitude" class="control-label">Широта</label>
-                            <input asp-for="Latitude" class="form-control" type="number" step="any" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="Longitude" class="control-label">Довгота</label>
-                            <input asp-for="Longitude" class="form-control" type="number" step="any" />
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label asp-for="Biography" class="control-label">Біографія</label>
-                    <textarea asp-for="Biography" class="form-control" rows="5"></textarea>
-                    <span asp-validation-for="Biography" class="text-danger"></span>
-                </div>
+                <input type="file" name="photoFile" class="form-control" accept="image/*" />
+            </div> <div class="form-group">
+                <label asp-for="Birthplace" class="control-label">Місце народження</label>
+                <input asp-for="Birthplace" class="form-control" />
             </div>
+            <div class="row">
+            </div>
+            <div class="form-group">
+                <label asp-for="Biography" class="control-label">Біографія</label>
+                <textarea asp-for="Biography" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Biography" class="text-danger"></span>
+            </div>
+
             <div class="form-group mt-3">
                 <input type="submit" value="Створити" class="btn btn-primary" />
             </div>

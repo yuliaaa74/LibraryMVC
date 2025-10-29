@@ -13,6 +13,8 @@
         <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
+            
+            <input type="hidden" asp-for="PhotoPath" />
 
             <div class="form-group">
                 <label asp-for="Title" class="control-label">Назва</label>
@@ -33,13 +35,24 @@
 
             <div class="form-group">
                 <label for="photoFile" class="control-label">Нова обкладинка</label>
-                <input type="file" name="photoFile" class="form-control" />
+                
+                @if (!string.IsNullOrEmpty(Model.PhotoPath))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.PhotoPath" alt="Поточна обкладинка" style="max-width: 150px;" class="img-thumbnail" />
+                    </div>
+                }
+                
+                <input type="file" name="photoFile" class="form-control" accept="image/*" />
+                <small class="form-text text-muted">Завантажте новий файл, щоб замінити поточний.</small>
             </div>
+            
             <div class="form-group">
                 <label asp-for="Description" class="control-label">Опис</label>
                 <textarea asp-for="Description" class="form-control" rows="5"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+            
             <div class="form-group mt-3">
                 <input type="submit" value="Зберегти" class="btn btn-primary" />
             </div>

@@ -4,18 +4,19 @@ using LibraryMVC.Data;
 using LibraryMVC.Models;
 using LibraryMVC.Services;
 using Microsoft.AspNetCore.Authorization;
+using LibraryMVC.FileService;
 
 namespace LibraryMVC.Controllers
 {
     public class AuthorsController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly FileService _fileService;
+        private readonly BlobStorageService _blobService;
 
-        public AuthorsController(AppDbContext context, FileService fileService)
+        public AuthorsController(AppDbContext context, BlobStorageService blobService)
         {
             _context = context;
-            _fileService = fileService;
+            _blobService = blobService;
         }
 
         public async Task<IActionResult> Index()
@@ -66,7 +67,8 @@ namespace LibraryMVC.Controllers
             {
                 if (photoFile != null)
                 {
-                    author.PhotoPath = await _fileService.SaveFileAsync(photoFile, "images/authors");
+                    string photoUrl = await _blobService.UploadFileAsync("images", photoFile);
+                    author.PhotoPath = photoUrl;
                 }
 
                 _context.Add(author);
@@ -105,13 +107,37 @@ namespace LibraryMVC.Controllers
                 authorToUpdate.Longitude = author.Longitude;
                 if (photoFile != null)
                 {
-                    _fileService.DeleteFile(authorToUpdate.PhotoPath);
-                    authorToUpdate.PhotoPath = await _fileService.SaveFileAsync(photoFile, "images/authors");
+                    if (!string.IsNullOrEmpty(author.PhotoPath))
+                    {
+                        await _blobService.DeleteFileAsync(author.PhotoPath);
+                    }
+
+                    string newPhotoUrl = await _blobService.UploadFileAsync("images", photoFile);
+                    authorToUpdate.PhotoPath = newPhotoUrl; // <-- ГОЛОВНИЙ ФІКС
+                }
+                else
+                {
+                    // Якщо файл не завантажено, нам все одно 
+                    // треба оновити PhotoPath на випадок, 
+                    // якщо його видалили, але не замінили.
+                    // Вхідна модель `author` має містити старий шлях.
+                    authorToUpdate.PhotoPath = author.PhotoPath;
                 }
 
-                await _context.SaveChangesAsync();
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    
+                    throw;
+                }
+
                 return RedirectToAction(nameof(Index));
             }
+
+           
             return View(authorToUpdate);
         }
         [Authorize(Roles = "Admin")]
@@ -131,8 +157,8 @@ namespace LibraryMVC.Controllers
             var author = await _context.Authors.FindAsync(id);
             if (author != null)
             {
-               
-                _fileService.DeleteFile(author.PhotoPath);
+
+                await _blobService.DeleteFileAsync(author.PhotoPath);
                 _context.Authors.Remove(author);
                 await _context.SaveChangesAsync();
             }

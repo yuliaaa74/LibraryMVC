@@ -7,6 +7,7 @@ using LibraryMVC.Services;
 
 using Microsoft.AspNetCore.Identity; 
 using Microsoft.AspNetCore.Authorization;
+using LibraryMVC.FileService;
 
 
 namespace LibraryMVC.Controllers
@@ -14,14 +15,14 @@ namespace LibraryMVC.Controllers
     public class BooksController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly FileService _fileService;
+        private readonly BlobStorageService _blobService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly TelegramNotificationService _telegramService;
 
-        public BooksController(AppDbContext context, FileService fileService, UserManager<ApplicationUser> userManager, TelegramNotificationService telegramService)
+        public BooksController(AppDbContext context, BlobStorageService blobService, UserManager<ApplicationUser> userManager, TelegramNotificationService telegramService)
         {
             _context = context;
-            _fileService = fileService;
+            _blobService = blobService;
             _userManager = userManager;
             _telegramService = telegramService;
         }
@@ -96,7 +97,7 @@ namespace LibraryMVC.Controllers
             {
                 if (photoFile != null)
                 {
-                    book.PhotoPath = await _fileService.SaveFileAsync(photoFile, "images/books");
+                    book.PhotoPath = await _blobService.UploadFileAsync("images", photoFile);
                 }
 
                 if (genreIds != null && genreIds.Any())
@@ -156,9 +157,18 @@ namespace LibraryMVC.Controllers
                 bookToUpdate.Description = book.Description;
                 if (photoFile != null)
                 {
-                    _fileService.DeleteFile(bookToUpdate.PhotoPath);
-                  
-                    bookToUpdate.PhotoPath = await _fileService.SaveFileAsync(photoFile, "images/books");
+                    if (!string.IsNullOrEmpty(bookToUpdate.PhotoPath))
+                    {
+                        await _blobService.DeleteFileAsync(bookToUpdate.PhotoPath);
+                    }
+
+                    // ФІКС: Завантажуємо новий файл через _blobService
+                    bookToUpdate.PhotoPath = await _blobService.UploadFileAsync("images", photoFile);
+                }
+                else
+                {
+                    // Зберігаємо старий шлях, якщо новий файл не завантажено
+                    bookToUpdate.PhotoPath = book.PhotoPath;
                 }
 
                 var selectedGenres = await _context.Genres.Where(g => genreIds.Contains(g.Id)).ToListAsync();
@@ -189,14 +199,18 @@ namespace LibraryMVC.Controllers
             var book = await _context.Books.FindAsync(id);
             if (book != null)
             {
-             
-                _fileService.DeleteFile(book.PhotoPath);
+
+                if (!string.IsNullOrEmpty(book.PhotoPath))
+                {
+                    await _blobService.DeleteFileAsync(book.PhotoPath);
+                }
+
                 _context.Books.Remove(book);
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
         }
-        
+
         [HttpPost]
         [Authorize] 
         public async Task<IActionResult> AddToFavorites(int bookId)

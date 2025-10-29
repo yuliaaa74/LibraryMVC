@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using LibraryMVC.FileService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,7 +80,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
-
+builder.Services.AddSingleton<BlobStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<TelegramNotificationService>();
 builder.Services.AddTransient<FileService>();
