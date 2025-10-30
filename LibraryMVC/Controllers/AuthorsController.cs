@@ -117,7 +117,7 @@ namespace LibraryMVC.Controllers
                 }
                 else
                 {
-                   .
+                  
                     authorToUpdate.PhotoPath = author.PhotoPath;
                 }
 
