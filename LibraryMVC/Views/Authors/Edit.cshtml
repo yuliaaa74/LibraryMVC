@@ -11,7 +11,6 @@
         <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-
             <input type="hidden" asp-for="PhotoPath" />
 
             <div class="form-group">
@@ -26,13 +25,21 @@
                 @if (!string.IsNullOrEmpty(Model.PhotoPath))
                 {
                     <div class="mb-2">
-                        <img src="@Model.PhotoPath" alt="Поточне фото" style="max-width: 150px; max-height: 150px;" class="img-thumbnail" />
+                        <img id="photoPreview" src="@Model.PhotoPath" alt="Поточне фото" style="max-width: 150px; max-height: 150px;" class="img-thumbnail" />
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-2">
+                        <img id="photoPreview" src="" alt="Попередній перегляд" style="max-width: 150px; max-height: 150px; display: none;" class="img-thumbnail" />
                     </div>
                 }
 
-                <input type="file" name="photoFile" class="form-control" accept="image/*" />
-               
-            </div> <div class="form-group">
+                <input type="file" name="photoFile" id="photoFileInput" class="form-control" accept="image/*" />
+
+            </div>
+
+            <div class="form-group">
                 <label asp-for="Birthplace" class="control-label">Місце народження</label>
                 <input asp-for="Birthplace" class="form-control" />
             </div>
@@ -74,4 +81,36 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+           
+            const photoFileInput = document.getElementById('photoFileInput');
+            const photoPreview = document.getElementById('photoPreview');
+
+            if (photoFileInput && photoPreview) {
+
+                
+                photoFileInput.addEventListener('change', function(event) {
+
+                    
+                    const file = event.target.files[0];
+
+                    if (file) {
+                       
+                        const reader = new FileReader();
+
+                        
+                        reader.onload = function(e) {
+                            photoPreview.src = e.target.result;
+                            photoPreview.style.display = 'block'; 
+                        };
+
+                       
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
 }

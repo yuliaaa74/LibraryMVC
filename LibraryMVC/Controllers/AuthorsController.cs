@@ -113,14 +113,11 @@ namespace LibraryMVC.Controllers
                     }
 
                     string newPhotoUrl = await _blobService.UploadFileAsync("images", photoFile);
-                    authorToUpdate.PhotoPath = newPhotoUrl; // <-- ГОЛОВНИЙ ФІКС
+                    authorToUpdate.PhotoPath = newPhotoUrl; 
                 }
                 else
                 {
-                    // Якщо файл не завантажено, нам все одно 
-                    // треба оновити PhotoPath на випадок, 
-                    // якщо його видалили, але не замінили.
-                    // Вхідна модель `author` має містити старий шлях.
+                   .
                     authorToUpdate.PhotoPath = author.PhotoPath;
                 }
 

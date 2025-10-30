@@ -1,0 +1,39 @@
+@using LibraryMVC.Controllers
+@model ManageUserRolesViewModel
+
+@{
+    ViewData["Title"] = "Керування ролями (планами)";
+}
+
+<h1>Керування планами для @Model.Email</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="Email" />
+
+            <div class="card">
+                <div class="card-header">
+                    Оберіть ролі (плани) для цього користувача:
+                </div>
+                <div class="list-group list-group-flush">
+                    @for (int i = 0; i < Model.Roles.Count; i++)
+                    {
+                        <label class="list-group-item">
+                            <input type="hidden" asp-for="Roles[i].RoleName" />
+                            <input type="checkbox" asp-for="Roles[i].IsSelected" class="form-check-input me-2" />
+                            @Model.Roles[i].RoleName
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Зберегти" class="btn btn-success" />
+                <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+            </div>
+        </form>
+    </div>
+</div>

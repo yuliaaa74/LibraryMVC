@@ -35,15 +35,14 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.UserIdClaimType = System.Security.Claims.ClaimTypes.NameIdentifier;
 });
 
-// Це налаштовує сервіси для читання заголовків X-Forwarded-Proto
-// щоб додаток "знав" про HTTPS за проксі-сервером Azure
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
         Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
         Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
 
-    // Ми довіряємо проксі-серверу Azure, тому очищуємо обмеження
+    
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
@@ -79,7 +78,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         }
     };
 });
-
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<BlobStorageService>();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<TelegramNotificationService>();
@@ -185,7 +184,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
-
+app.MapHub<LibraryMVC.Hubs.ReadingListHub>("/readingListHub");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -200,8 +199,9 @@ using (var scope = app.Services.CreateScope())
         await roleManager.CreateAsync(new IdentityRole("Admin"));
     if (!await roleManager.RoleExistsAsync("User"))
         await roleManager.CreateAsync(new IdentityRole("User"));
+    if (!await roleManager.RoleExistsAsync("PremiumUser"))
+        await roleManager.CreateAsync(new IdentityRole("PremiumUser"));
 
- 
     var centralTenant = await context.Tenants.FirstOrDefaultAsync(t => t.Name == "Central Library")
                         ?? new Tenant { Name = "Central Library" };
     if (centralTenant.Id == 0) { context.Tenants.Add(centralTenant); await context.SaveChangesAsync(); }
@@ -240,7 +240,7 @@ using (var scope = app.Services.CreateScope())
     }
     
     }
-app.MapHub<LibraryMVC.Hubs.ReadingListHub>("/readingListHub");
+
 
 
 

@@ -29,15 +29,27 @@
                 <select name="genreIds" class="form-control" multiple asp-items="ViewBag.AllGenres"></select>
             </div>
 
+            <div class="form-check mb-3">
+                <input class="form-check-input" asp-for="IsPremiumOnly" />
+                <label class="form-check-label" asp-for="IsPremiumOnly"></label>
+            </div>
+
             <div class="form-group">
                 <label for="photoFile" class="control-label">Обкладинка</label>
-                <input type="file" name="photoFile" class="form-control" />
+
+                <div class="mb-2">
+                    <img id="photoPreview" src="" alt="Попередній перегляд" style="max-width: 150px; max-height: 150px; display: none;" class="img-thumbnail" />
+                </div>
+
+                <input type="file" name="photoFile" id="photoFileInput" class="form-control" accept="image/*" />
             </div>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label">Опис</label>
                 <textarea asp-for="Description" class="form-control" rows="5"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group mt-3">
                 <input type="submit" value="Створити" class="btn btn-primary" />
             </div>
@@ -53,4 +65,36 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+           
+            const photoFileInput = document.getElementById('photoFileInput');
+            const photoPreview = document.getElementById('photoPreview');
+
+            if (photoFileInput && photoPreview) {
+
+               
+                photoFileInput.addEventListener('change', function(event) {
+
+                    
+                    const file = event.target.files[0];
+
+                    if (file) {
+                        
+                        const reader = new FileReader();
+
+                        
+                        reader.onload = function(e) {
+                            photoPreview.src = e.target.result;
+                            photoPreview.style.display = 'block'; 
+                        };
+
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
 }

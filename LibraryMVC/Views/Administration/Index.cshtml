@@ -1,0 +1,32 @@
+@using LibraryMVC.Controllers
+@model IEnumerable<UserRolesViewModel>
+
+@{
+    ViewData["Title"] = "Керування користувачами";
+}
+
+<h1>Керування користувачами</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Ролі (Плани)</th>
+            <th>Дія</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@string.Join(", ", user.Roles)</td>
+                <td>
+                    <a asp-action="ManageRoles" asp-route-userId="@user.UserId" class="btn btn-primary btn-sm">
+                        Змінити план
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -29,7 +29,27 @@ namespace LibraryMVC.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var books = await _context.Books.Include(b => b.Author).Include(b => b.Genres).ToListAsync();
+            var user = await _userManager.GetUserAsync(User);
+            bool isPremiumOrAdmin = false;
+
+            if (user != null)
+            {
+                isPremiumOrAdmin = await _userManager.IsInRoleAsync(user, "Admin") ||
+                                   await _userManager.IsInRoleAsync(user, "PremiumUser");
+            }
+
+            var booksQuery = _context.Books
+                .Include(b => b.Author)
+                .Include(b => b.Genres)
+                .AsQueryable(); 
+
+           
+            if (!isPremiumOrAdmin)
+            {
+                booksQuery = booksQuery.Where(b => !b.IsPremiumOnly);
+            }
+
+            var books = await booksQuery.ToListAsync();
             return View(books);
         }
 
@@ -91,7 +111,7 @@ namespace LibraryMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([Bind("Title,AuthorId,Description")] Book book, List<int> genreIds, IFormFile? photoFile)
+        public async Task<IActionResult> Create([Bind("Title,AuthorId,Description,IsPremiumOnly")] Book book, List<int> genreIds, IFormFile? photoFile)
         {
             if (ModelState.IsValid)
             {
@@ -143,7 +163,7 @@ namespace LibraryMVC.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,PhotoPath,Description")] Book book, List<int> genreIds, IFormFile? photoFile)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,PhotoPath,Description,IsPremiumOnly")] Book book, List<int> genreIds, IFormFile? photoFile)
         {
             if (id != book.Id) return NotFound();
 
@@ -155,6 +175,7 @@ namespace LibraryMVC.Controllers
                 bookToUpdate.Title = book.Title;
                 bookToUpdate.AuthorId = book.AuthorId;
                 bookToUpdate.Description = book.Description;
+                bookToUpdate.IsPremiumOnly = book.IsPremiumOnly;
                 if (photoFile != null)
                 {
                     if (!string.IsNullOrEmpty(bookToUpdate.PhotoPath))
@@ -162,12 +183,12 @@ namespace LibraryMVC.Controllers
                         await _blobService.DeleteFileAsync(bookToUpdate.PhotoPath);
                     }
 
-                    // ФІКС: Завантажуємо новий файл через _blobService
+                    
                     bookToUpdate.PhotoPath = await _blobService.UploadFileAsync("images", photoFile);
                 }
                 else
                 {
-                    // Зберігаємо старий шлях, якщо новий файл не завантажено
+                    
                     bookToUpdate.PhotoPath = book.PhotoPath;
                 }
 

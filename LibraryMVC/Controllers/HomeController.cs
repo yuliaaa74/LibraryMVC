@@ -12,7 +12,7 @@ namespace LibraryMVC.Controllers
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
 
-        // Оновлюємо конструктор, щоб отримати доступ до AppDbContext та IConfiguration
+        
         public HomeController(IConfiguration configuration, AppDbContext context)
         {
             _configuration = configuration;

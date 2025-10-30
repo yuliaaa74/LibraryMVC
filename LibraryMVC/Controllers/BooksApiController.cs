@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryMVC.Data;
+using Microsoft.Extensions.Caching.Memory;
 using LibraryMVC.Models;
 using LibraryMVC.DTOs;
 
@@ -11,20 +12,25 @@ namespace LibraryMVC.Controllers
     public class BooksApiController : ControllerBase
     {
         private readonly AppDbContext _context;
-
-        public BooksApiController(AppDbContext context)
+        private readonly IMemoryCache _cache;
+        public BooksApiController(AppDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         // GET: api/BooksApi 
         [HttpGet]
         public async Task<ActionResult<PaginatedResponse<Book>>> GetBooks([FromQuery] int skip = 0, [FromQuery] int limit = 5)
         {
-            
-            var totalCount = await _context.Books.CountAsync();
 
-            
+            var totalCount = await _cache.GetOrCreateAsync("Api_Books_TotalCount", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return await _context.Books.CountAsync();
+            });
+
+
             var books = await _context.Books
                 .Include(b => b.Author)
                 .Include(b => b.Genres)
@@ -56,10 +62,20 @@ namespace LibraryMVC.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-            var book = await _context.Books
-                                     .Include(b => b.Author)
-                                     .Include(b => b.Genres)
-                                     .FirstOrDefaultAsync(b => b.Id == id);
+            
+            string cacheKey = $"Api_GetBook_{id}";
+
+            
+            var book = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+
+                return await _context.Books
+                    .Include(b => b.Author)
+                    .Include(b => b.Genres)
+                    .FirstOrDefaultAsync(b => b.Id == id);
+            });
 
             if (book == null)
             {
@@ -68,23 +84,15 @@ namespace LibraryMVC.Controllers
             return book;
         }
 
-        // POST: api/BooksApi 
-        [HttpPost]
+        
         // POST: api/BooksApi
         [HttpPost]
         public async Task<ActionResult<Book>> PostBook(BookDto bookDto)
         {
 
             var author = await _context.Authors.FindAsync(bookDto.AuthorId);
-            if (author == null)
-            {
-                return BadRequest("Author not found.");
-            }
-
-
+            if (author == null) return BadRequest("Author not found.");
             var genres = await _context.Genres.Where(g => bookDto.GenreIds.Contains(g.Id)).ToListAsync();
-
-
             var newBook = new Book
             {
                 Title = bookDto.Title,
@@ -97,6 +105,9 @@ namespace LibraryMVC.Controllers
 
             _context.Books.Add(newBook);
             await _context.SaveChangesAsync();
+
+            
+            _cache.Remove("Api_Books_TotalCount");
 
             return CreatedAtAction("GetBook", new { id = newBook.Id }, newBook);
         }
@@ -120,6 +131,8 @@ namespace LibraryMVC.Controllers
             bookToUpdate.Genres = genres;
             bookToUpdate.Description = bookDto.Description;
             await _context.SaveChangesAsync();
+            string cacheKey = $"Api_GetBook_{id}";
+            _cache.Remove(cacheKey);
             return NoContent();
         }
 
@@ -136,6 +149,11 @@ namespace LibraryMVC.Controllers
             _context.Books.Remove(book);
             await _context.SaveChangesAsync();
 
+            string cacheKey = $"Api_GetBook_{id}";
+            _cache.Remove(cacheKey);
+
+           
+            _cache.Remove("Api_Books_TotalCount");
             return NoContent();
         }
     }

@@ -22,6 +22,8 @@
         [Display(Name = "Обкладинка")]
         public string? PhotoPath { get; set; }
             public string? Description { get; set; }
+        [Display(Name = "Тільки для Premium")]
+        public bool IsPremiumOnly { get; set; } = false;
         public ICollection<ApplicationUser>? Users { get; set; }
         
     }

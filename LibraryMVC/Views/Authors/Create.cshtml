@@ -20,8 +20,15 @@
 
             <div class="form-group">
                 <label for="photoFile" class="control-label">Фото</label>
-                <input type="file" name="photoFile" class="form-control" accept="image/*" />
-            </div> <div class="form-group">
+
+                <div class="mb-2">
+                    <img id="photoPreview" src="" alt="Попередній перегляд" style="max-width: 150px; max-height: 150px; display: none;" class="img-thumbnail" />
+                </div>
+
+                <input type="file" name="photoFile" id="photoFileInput" class="form-control" accept="image/*" />
+            </div>
+
+            <div class="form-group">
                 <label asp-for="Birthplace" class="control-label">Місце народження</label>
                 <input asp-for="Birthplace" class="form-control" />
             </div>
@@ -40,8 +47,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
-            </div>
+
             <div class="form-group">
                 <label asp-for="Biography" class="control-label">Біографія</label>
                 <textarea asp-for="Biography" class="form-control" rows="5"></textarea>
@@ -63,4 +69,36 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          
+            const photoFileInput = document.getElementById('photoFileInput');
+            const photoPreview = document.getElementById('photoPreview');
+
+            if (photoFileInput && photoPreview) {
+
+                
+                photoFileInput.addEventListener('change', function(event) {
+
+                  
+                    const file = event.target.files[0];
+
+                    if (file) {
+                       
+                        const reader = new FileReader();
+
+                      
+                        reader.onload = function(e) {
+                            photoPreview.src = e.target.result;
+                            photoPreview.style.display = 'block'; 
+                        };
+
+                     
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
 }

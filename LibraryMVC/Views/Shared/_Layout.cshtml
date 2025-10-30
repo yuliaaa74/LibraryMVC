@@ -33,6 +33,14 @@
                         <li class="nav-item">
                             <a class="nav-link @ViewHelper.IsActive(ViewContext, "Genres")" asp-area="" asp-controller="Genres" asp-action="Index">🎨 Жанри</a>
                         </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link @ViewHelper.IsActive(ViewContext, "Administration")" asp-controller="Administration" asp-action="Index">
+                                    Керування
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="ReadingList">Список читання</a>
                         </li>
@@ -40,6 +48,14 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Books" asp-action="MyFavorites">Мої обрані</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Admin") || User.IsInRole("PremiumUser"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning @ViewHelper.IsActive(ViewContext, "Premium")" asp-controller="Premium" asp-action="Index">
+                                    <i class="fas fa-star"></i> Premium
+                                </a>
                             </li>
                         }
                         <li class="nav-item">
