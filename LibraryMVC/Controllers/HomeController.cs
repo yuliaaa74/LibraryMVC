@@ -1,4 +1,5 @@
 using LibraryMVC.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -42,6 +43,8 @@ namespace LibraryMVC.Controllers
 
             return View();
         }
+        [Authorize] 
+        [Route("ReadingList")]
         public IActionResult ReadingList()
         {
             return View();

@@ -76,8 +76,8 @@ else
                                 <a asp-controller="Books" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Видалити</a>
                             }
 
-                          
-                            <button class="btn btn-outline-success" onclick="addToReadingList('@item.Title', '@(item.Author?.Name ?? "Невідомий автор")')">
+
+                            <button class="btn btn-outline-success btn-add-to-list" onclick="addToReadingList('@item.Title', '@(item.Author?.Name ?? "Невідомий автор")')">
                                 Хочу прочитати
                             </button>
                             
