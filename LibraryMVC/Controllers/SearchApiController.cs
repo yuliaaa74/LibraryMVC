@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace LibraryMVC.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/search")] 
     [ApiController]
     public class SearchApiController : ControllerBase
     {
