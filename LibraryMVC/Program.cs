@@ -11,6 +11,8 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using LibraryMVC.FileService;
+using Azure.Search.Documents.Indexes.Models;
+using Azure.Search.Documents.Indexes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -149,7 +151,46 @@ builder.Services.AddAuthentication()
     });
 
 var app = builder.Build();
+try
+{
+    
+    var searchServiceUrl = builder.Configuration.GetValue<string>("AzureAiSearch:ServiceUrl");
+    var searchAdminKey = builder.Configuration.GetValue<string>("AzureAiSearch:AdminApiKey");
+    string indexName = "books-index"; 
 
+    if (!string.IsNullOrEmpty(searchServiceUrl) && !string.IsNullOrEmpty(searchAdminKey))
+    {
+        Uri serviceEndpoint = new Uri(searchServiceUrl);
+        Azure.AzureKeyCredential credential = new Azure.AzureKeyCredential(searchAdminKey);
+
+        
+        SearchIndexClient indexClient = new SearchIndexClient(serviceEndpoint, credential);
+
+        
+        try
+        {
+            var existingIndex = indexClient.GetIndex(indexName);
+            Console.WriteLine("--> Azure Search: Індекс 'books-index' вже існує.");
+        }
+        catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+        {
+            
+            Console.WriteLine("--> Azure Search: Індекс 'books-index' не знайдено. Створюємо...");
+
+            
+            FieldBuilder fieldBuilder = new FieldBuilder();
+            var fields = fieldBuilder.Build(typeof(LibraryMVC.Models.BookSearchModel));
+            var definition = new SearchIndex(indexName, fields);
+
+            indexClient.CreateIndex(definition);
+            Console.WriteLine("--> Azure Search: Індекс 'books-index' успішно створено.");
+        }
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"--> Azure Search: Помилка при ініціалізації індексу: {ex.Message}");
+}
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
