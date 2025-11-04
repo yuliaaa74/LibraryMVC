@@ -77,7 +77,7 @@ namespace LibraryMVC.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-            // (Твій код B9 - правильний)
+          
             string cacheKey = $"Api_GetBook_{id}";
             var book = await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
