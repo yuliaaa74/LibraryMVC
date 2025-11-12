@@ -280,7 +280,35 @@ using (var scope = app.Services.CreateScope())
         if (result.Succeeded) await userManager.AddToRoleAsync(eastAdmin, "Admin");
     }
     
+    
+    if (eastTenant == null)
+    {
+       
+        eastTenant = new Tenant { Name = "East Library" };
+        context.Tenants.Add(eastTenant);
+        await context.SaveChangesAsync();
     }
+
+    
+    if (await userManager.FindByEmailAsync("atatat@gmail.com") == null)
+    {
+        var eastUser = new ApplicationUser
+        {
+            UserName = "atatat@gmail.com",
+            Email = "atatat@gmail.com",
+            Name = "At",
+            EmailConfirmed = true,
+            TenantId = eastTenant.Id 
+        };
+        var result = await userManager.CreateAsync(eastUser, "Chastuhina13!");
+        if (result.Succeeded)
+        {
+            
+            await userManager.AddToRoleAsync(eastUser, "User");
+        }
+    }
+
+}
 
 
 
